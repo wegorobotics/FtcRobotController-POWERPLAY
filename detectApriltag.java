@@ -40,9 +40,7 @@ public class detectApriltag extends LinearOpMode {
     int MIDDLE = 2;
     int RIGHT = 5;
     int tagNumber = 10;
-
     boolean tagFound = false;
-    boolean isActive = false;
 
     AprilTagDetection tagOfInterest = null;
 
@@ -171,16 +169,16 @@ public class detectApriltag extends LinearOpMode {
                     // test
                     drive(0.5, 1, 1, 0, 5);
 
-                } else if (tagNumber == 2) {
-                    telemetry.addLine("Tag 2 has been found... going FORWARD");
+                } else if (tagNumber == 5) {
+                    telemetry.addLine("Tag 5 has been found... going FORWARD");
                     telemetry.addLine("Tag snapshot:\n");
                     tagToTelemetry(tagOfInterest);
                     telemetry.update();
 
                     drive(0.5, -1, -1, 0, 5);
 
-                } else if (tagNumber == 5){
-                    telemetry.addLine("Tag 5 has been found... going RIGHT");
+                } else if (tagNumber == 2){
+                    telemetry.addLine("Tag 2 has been found... going RIGHT");
                     telemetry.addLine("Tag snapshot:\n");
                     tagToTelemetry(tagOfInterest);
                     telemetry.update();
@@ -193,8 +191,7 @@ public class detectApriltag extends LinearOpMode {
                     telemetry.addLine("Tag snapshot:\n");
                     tagToTelemetry(tagOfInterest);
                     telemetry.update();
-
-            }
+                }
             }
         }
     }
@@ -208,4 +205,3 @@ public class detectApriltag extends LinearOpMode {
             telemetry.addLine(String.format("Rotation Roll: %.2f degrees", Math.toDegrees(detection.pose.roll)));
         }
     }
-
