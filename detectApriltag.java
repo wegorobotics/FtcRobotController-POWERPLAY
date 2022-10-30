@@ -1,10 +1,9 @@
 package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import org.checkerframework.checker.units.qual.C;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.openftc.apriltag.AprilTagDetection;
 import org.openftc.easyopencv.OpenCvCamera;
@@ -14,8 +13,8 @@ import org.openftc.easyopencv.OpenCvWebcam;
 import java.util.ArrayList;
 
 //@Disabled
-@Autonomous(name="detect Apriltag")
-public class detectApriltag extends OpMode {
+@Autonomous(name="detecting tag")
+public class detectApriltag extends LinearOpMode {
 
     DcMotorEx A;
     DcMotorEx B;
@@ -37,13 +36,12 @@ public class detectApriltag extends OpMode {
     double tagsize = 0.06; // 60mm tag size
 
     // apriltags
-    int ID_TAG_OF_INTEREST = 0;
-    int ID_TAG_OF_INTEREST2 = 2;
-    int ID_TAG_OF_INTEREST3 = 5;
+    int LEFT = 0;
+    int MIDDLE = 2;
+    int RIGHT = 5;
+    int tagNumber = 10;
 
-    boolean tag1Found = false;
-    boolean tag2Found = false;
-    boolean tag3Found = false;
+    boolean tagFound = false;
     boolean isActive = false;
 
     AprilTagDetection tagOfInterest = null;
@@ -54,7 +52,7 @@ public class detectApriltag extends OpMode {
         // yCoord (left stick y-axis)
         // hValue (right stick x-axis)
 
-        if (isActive) {
+        if (opModeIsActive()) {
             double y = -yCoord;
             double x = -xCoord;
             double h = -hValue * 0.6;
@@ -94,47 +92,49 @@ public class detectApriltag extends OpMode {
     }
 
     @Override
-    public void init() {
-            int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
-            webcam = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
+    public void runOpMode() {
+        int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+        webcam = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
 
-            A = hardwareMap.get(DcMotorEx.class, "motorA");
-            B = hardwareMap.get(DcMotorEx.class, "motorB");
-            C = hardwareMap.get(DcMotorEx.class, "motorC");
-            D = hardwareMap.get(DcMotorEx.class, "motorD");
+        // without monitor view:
+        // webcam = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"));
 
-            A.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            B.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            C.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            D.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        aprilTagDetectionPipeline = new AprilTagDetectionPipeline(tagsize, fx, fy, cx, cy);
 
-            A.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            B.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            C.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            D.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        webcam.setPipeline(aprilTagDetectionPipeline);
+        webcam.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
 
-            B.setDirection(DcMotor.Direction.REVERSE);
-            C.setDirection(DcMotor.Direction.REVERSE);
+            @Override
+            public void onOpened() {
+                webcam.startStreaming(640, 480, OpenCvCameraRotation.UPRIGHT);
+            }
 
-            // without monitor view:
-            // webcam = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"));
+            @Override
+            public void onError(int errorCode) {
+                telemetry.addData("Camera Failed", "");
+                telemetry.update();
+            }
+        });
 
-            aprilTagDetectionPipeline = new AprilTagDetectionPipeline(tagsize, fx, fy, cx, cy);
+        A = hardwareMap.get(DcMotorEx.class, "motorA");
+        B = hardwareMap.get(DcMotorEx.class, "motorB");
+        C = hardwareMap.get(DcMotorEx.class, "motorC");
+        D = hardwareMap.get(DcMotorEx.class, "motorD");
 
-            webcam.setPipeline(aprilTagDetectionPipeline);
-            webcam.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
+        A.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        B.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        C.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        D.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-                @Override
-                public void onOpened() {
-                    webcam.startStreaming(640, 480, OpenCvCameraRotation.UPRIGHT);
-                }
+        A.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        B.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        C.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        D.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
-                @Override
-                public void onError(int errorCode) {
-                    telemetry.addData("Camera Failed", "");
-                    telemetry.update();
-                }
-            });
+        B.setDirection(DcMotor.Direction.REVERSE);
+        C.setDirection(DcMotor.Direction.REVERSE);
+
+        while (!isStarted() && !isStopRequested()) {
 
             ArrayList<AprilTagDetection> currentDetections = aprilTagDetectionPipeline.getLatestDetections();
 
@@ -142,80 +142,70 @@ public class detectApriltag extends OpMode {
 
                 // labeling which tag is detected
                 for (AprilTagDetection tag : currentDetections) {
-                    if (tag.id == ID_TAG_OF_INTEREST) {
+                    if (tag.id == LEFT || tag.id == MIDDLE || tag.id == RIGHT) {
                         tagOfInterest = tag;
-                        tag1Found = true;
-                        break;
-                    } else if (tag.id == ID_TAG_OF_INTEREST2) {
-                        tagOfInterest = tag;
-                        tag2Found = true;
-                        break;
-                    } else if (tag.id == ID_TAG_OF_INTEREST3) {
-                        tagOfInterest = tag;
-                        tag3Found = true;
-                        break;
-                    } else {
-                        tagOfInterest = tag;
+                        tagFound = true;
+                        tagNumber = tag.id;
                         break;
                     }
+
                 }
             }
         }
 
-    @Override
-    public void start() {
+        waitForStart();
 
-            // actual autonomous based on init apriltag processing
+        while (opModeIsActive()) {
 
-            if (!tag1Found && !tag2Found && !tag3Found) {
+            if (!tagFound) {
                 // didn't see tag
                 telemetry.addLine("No tag has been found");
                 telemetry.update();
             } else {
-                if (tag1Found) {
-                    boolean isActive = true;
-                    telemetry.addLine("Tag 1 has been found");
+                if (tagNumber == 0) {
+                    telemetry.addLine("Tag 0 has been found... going LEFT");
                     telemetry.addLine("Tag snapshot:\n");
                     tagToTelemetry(tagOfInterest);
                     telemetry.update();
 
                     // test
-                    drive(0.5,1,1,0,5);
+                    drive(0.5, 1, 1, 0, 5);
 
-                } else if (tag2Found) {
-                    boolean isActive = true;
-                    telemetry.addLine("Tag 2 has been found");
+                } else if (tagNumber == 2) {
+                    telemetry.addLine("Tag 2 has been found... going FORWARD");
                     telemetry.addLine("Tag snapshot:\n");
                     tagToTelemetry(tagOfInterest);
                     telemetry.update();
 
-                    drive(0.5,-1,-1,0,5);
-                } else {
-                    boolean isActive = true;
-                    telemetry.addLine("Tag 3 has been found");
+                    drive(0.5, -1, -1, 0, 5);
+
+                } else if (tagNumber == 5){
+                    telemetry.addLine("Tag 5 has been found... going RIGHT");
                     telemetry.addLine("Tag snapshot:\n");
                     tagToTelemetry(tagOfInterest);
                     telemetry.update();
 
-                    drive(0.5,0,1,0,5);
+                    drive(0.5, 0, 1, 0, 5);
                 }
+
+                else {
+                    telemetry.addLine("Detected wrong tag, not going anywhere");
+                    telemetry.addLine("Tag snapshot:\n");
+                    tagToTelemetry(tagOfInterest);
+                    telemetry.update();
+
+            }
             }
         }
-
-    @Override
-    public void loop() {
-        if (gamepad1.a) {
-            webcam.stopStreaming();
+    }
+        void tagToTelemetry (AprilTagDetection detection) {
+            telemetry.addLine(String.format("\nDetected tag ID=%d", detection.id));
+            telemetry.addLine(String.format("Translation X: %.2f feet", detection.pose.x * FEET_PER_METER));
+            telemetry.addLine(String.format("Translation Y: %.2f feet", detection.pose.y * FEET_PER_METER));
+            telemetry.addLine(String.format("Translation Z: %.2f feet", detection.pose.z * FEET_PER_METER));
+            telemetry.addLine(String.format("Rotation Yaw: %.2f degrees", Math.toDegrees(detection.pose.yaw)));
+            telemetry.addLine(String.format("Rotation Pitch: %.2f degrees", Math.toDegrees(detection.pose.pitch)));
+            telemetry.addLine(String.format("Rotation Roll: %.2f degrees", Math.toDegrees(detection.pose.roll)));
         }
     }
 
-    void tagToTelemetry(AprilTagDetection detection) {
-        telemetry.addLine(String.format("\nDetected tag ID=%d", detection.id));
-        telemetry.addLine(String.format("Translation X: %.2f feet", detection.pose.x * FEET_PER_METER));
-        telemetry.addLine(String.format("Translation Y: %.2f feet", detection.pose.y * FEET_PER_METER));
-        telemetry.addLine(String.format("Translation Z: %.2f feet", detection.pose.z * FEET_PER_METER));
-        telemetry.addLine(String.format("Rotation Yaw: %.2f degrees", Math.toDegrees(detection.pose.yaw)));
-        telemetry.addLine(String.format("Rotation Pitch: %.2f degrees", Math.toDegrees(detection.pose.pitch)));
-        telemetry.addLine(String.format("Rotation Roll: %.2f degrees", Math.toDegrees(detection.pose.roll)));
-    }
-}
